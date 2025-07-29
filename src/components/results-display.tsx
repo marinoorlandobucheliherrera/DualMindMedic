@@ -15,6 +15,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragEndEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -49,10 +50,10 @@ export function ResultsDisplay({ results, isLoading, onClearDiagnoses }: Results
     useSensor(PointerSensor)
   );
   
-  function handleDragEnd(event: any) {
+  function handleDragEnd(event: DragEndEvent) {
     const {active, over} = event;
     
-    if (active.id !== over.id) {
+    if (over && active.id !== over.id) {
       setDiagnoses((items) => {
         const oldIndex = items.findIndex(item => item.code === active.id);
         const newIndex = items.findIndex(item => item.code === over.id);
@@ -72,6 +73,12 @@ export function ResultsDisplay({ results, isLoading, onClearDiagnoses }: Results
   const handleClear = () => {
       setDiagnoses([]);
       onClearDiagnoses();
+  }
+  
+  const handleDeleteDiagnosis = (code: string) => {
+      setDiagnoses(currentDiagnoses => currentDiagnoses.filter(d => d.code !== code));
+      // Note: This only removes it from the view. The parent `results` state is not updated.
+      // If you need to persist this change, `onDeleteDiagnosis` prop would be needed.
   }
 
   return (
@@ -164,7 +171,7 @@ export function ResultsDisplay({ results, isLoading, onClearDiagnoses }: Results
                     >
                       <div className="space-y-2 py-2">
                       {diagnoses.map(diag => (
-                        <DiagnosisCard key={diag.code} diagnosis={diag} />
+                        <DiagnosisCard key={diag.code} diagnosis={diag} onDelete={handleDeleteDiagnosis} />
                       ))}
                       </div>
                     </SortableContext>

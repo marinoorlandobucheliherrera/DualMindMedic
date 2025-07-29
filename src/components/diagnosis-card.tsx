@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { GripVertical, Star, Save } from 'lucide-react';
+import { GripVertical, Star, Save, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,9 +22,10 @@ export type Diagnosis = {
 
 type DiagnosisCardProps = {
   diagnosis: Diagnosis;
+  onDelete: (code: string) => void;
 };
 
-export function DiagnosisCard({ diagnosis }: DiagnosisCardProps) {
+export function DiagnosisCard({ diagnosis, onDelete }: DiagnosisCardProps) {
   const { toast } = useToast();
   const [isPrimary, setIsPrimary] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
@@ -53,6 +54,10 @@ export function DiagnosisCard({ diagnosis }: DiagnosisCardProps) {
       title: 'Guardado (Simulación)',
       description: `Diagnóstico "${diagnosis.code}" guardado en el historial.`,
     });
+  }
+  
+  const handleDelete = () => {
+    onDelete(diagnosis.code);
   }
 
   return (
@@ -87,6 +92,9 @@ export function DiagnosisCard({ diagnosis }: DiagnosisCardProps) {
         </Badge>
         <Button size="icon" variant="ghost" onClick={handleSave} className="h-8 w-8" aria-label="Guardar en Historial">
             <Save className="h-4 w-4" />
+        </Button>
+        <Button size="icon" variant="ghost" onClick={handleDelete} className="h-8 w-8 text-destructive hover:text-destructive" aria-label="Eliminar diagnóstico">
+            <Trash2 className="h-4 w-4" />
         </Button>
       </div>
     </Card>
