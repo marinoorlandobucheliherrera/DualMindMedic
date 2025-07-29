@@ -63,18 +63,20 @@ export function DiagnosisCard({ diagnosis, onDelete }: DiagnosisCardProps) {
   return (
     <Card ref={setNodeRef} style={style} className="p-3 bg-card/80">
       <div className="flex items-center gap-2">
-        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1">
+        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 shrink-0">
           <GripVertical className="h-5 w-5 text-muted-foreground" />
         </button>
-        <Checkbox 
-          checked={isSelected}
-          onCheckedChange={() => setIsSelected(!isSelected)}
-          aria-label="Seleccionar diagnóstico" 
-        />
-        <button onClick={() => setIsPrimary(!isPrimary)} className="p-1">
+        <div className="shrink-0">
+          <Checkbox 
+            checked={isSelected}
+            onCheckedChange={() => setIsSelected(!isSelected)}
+            aria-label="Seleccionar diagnóstico" 
+          />
+        </div>
+        <button onClick={() => setIsPrimary(!isPrimary)} className="p-1 shrink-0">
           <Star className={cn('h-5 w-5', isPrimary ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground')} />
         </button>
-        <code className="font-semibold text-sm">{diagnosis.code}</code>
+        <code className="font-semibold text-sm shrink-0">{diagnosis.code}</code>
         <div className="flex-1 min-w-0">
             <TooltipProvider>
                 <Tooltip>
@@ -89,9 +91,11 @@ export function DiagnosisCard({ diagnosis, onDelete }: DiagnosisCardProps) {
                 </Tooltip>
             </TooltipProvider>
         </div>
-        <Badge style={confidenceStyles[diagnosis.confidence]} className="text-white shrink-0">
-            {diagnosis.confidence}
-        </Badge>
+        <div className="shrink-0">
+            <Badge style={confidenceStyles[diagnosis.confidence]} className="text-white">
+                {diagnosis.confidence}
+            </Badge>
+        </div>
         <Button size="icon" variant="ghost" onClick={handleSave} className="h-8 w-8 shrink-0" aria-label="Guardar en Historial">
             <Save className="h-4 w-4" />
         </Button>
