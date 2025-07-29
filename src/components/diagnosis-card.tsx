@@ -75,25 +75,27 @@ export function DiagnosisCard({ diagnosis, onDelete }: DiagnosisCardProps) {
           <Star className={cn('h-5 w-5', isPrimary ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground')} />
         </button>
         <code className="font-semibold text-sm">{diagnosis.code}</code>
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <p className="text-sm text-muted-foreground truncate flex-1 cursor-default">
-                      {diagnosis.description}
-                    </p>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>{diagnosis.description}</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-        <Badge style={confidenceStyles[diagnosis.confidence]} className="text-white">
+        <div className="flex-1 min-w-0">
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <p className="text-sm text-muted-foreground truncate cursor-default">
+                          {diagnosis.description}
+                        </p>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{diagnosis.description}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        </div>
+        <Badge style={confidenceStyles[diagnosis.confidence]} className="text-white shrink-0">
             {diagnosis.confidence}
         </Badge>
-        <Button size="icon" variant="ghost" onClick={handleSave} className="h-8 w-8" aria-label="Guardar en Historial">
+        <Button size="icon" variant="ghost" onClick={handleSave} className="h-8 w-8 shrink-0" aria-label="Guardar en Historial">
             <Save className="h-4 w-4" />
         </Button>
-        <Button size="icon" variant="ghost" onClick={handleDelete} className="h-8 w-8 text-destructive hover:text-destructive" aria-label="Eliminar diagnóstico">
+        <Button size="icon" variant="ghost" onClick={handleDelete} className="h-8 w-8 shrink-0 text-destructive hover:text-destructive" aria-label="Eliminar diagnóstico">
             <Trash2 className="h-4 w-4" />
         </Button>
       </div>
