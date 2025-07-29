@@ -6,12 +6,13 @@ import { IAProviderSelector } from '@/components/ia-provider-selector';
 import { DocumentProcessor } from '@/components/document-processor';
 import { ResultsDisplay } from '@/components/results-display';
 import { CodingSystemSelector, CodingSystem } from '@/components/coding-system-selector';
+import type { Diagnosis } from '@/components/diagnosis-card';
 
 type ResultsState = {
   extractedText?: string;
   summary?: string;
   concepts?: string[];
-  diagnoses?: string;
+  diagnoses?: Diagnosis[];
 };
 
 function HomePageContent() {
@@ -26,6 +27,10 @@ function HomePageContent() {
   const clearResults = () => {
     setResults({});
   };
+
+  const clearDiagnoses = () => {
+    setResults(prev => ({...prev, diagnoses: []}));
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,7 +52,7 @@ function HomePageContent() {
               onBusyChange={setIsBusy}
               codingSystem={codingSystem}
           />
-          <ResultsDisplay results={results} isLoading={isBusy} />
+          <ResultsDisplay results={results} isLoading={isBusy} onClearDiagnoses={clearDiagnoses} />
         </div>
       </main>
     </div>

@@ -9,12 +9,13 @@ import { useToast } from '@/hooks/use-toast';
 import { runIAFlow } from '@/lib/ai-client';
 import { useIAProvider } from '@/contexts/ia-provider-context';
 import type { CodingSystem } from './coding-system-selector';
+import type { Diagnosis } from './diagnosis-card';
 
 type ResultsState = {
   extractedText?: string;
   summary?: string;
   concepts?: string[];
-  diagnoses?: string;
+  diagnoses?: Diagnosis[];
 };
 
 type DocumentProcessorProps = {
@@ -112,6 +113,7 @@ export function DocumentProcessor({ onUpdateResults, onClearResults, onBusyChang
         toast({ title: 'Conceptos extraídos' });
 
         const diagnosesResult = await runIAFlow('suggestDiagnoses', { clinicalConcepts: concepts.join(', '), codingSystem: codingSystem }, iaProvider);
+        
         onUpdateResults({ concepts: concepts, diagnoses: diagnosesResult.diagnoses });
         toast({ title: 'Diagnósticos sugeridos' });
     } catch (err) {

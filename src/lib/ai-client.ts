@@ -34,7 +34,7 @@ const genkitFlows = {
 const ollamaPrompts = {
   extractTextFromDocument: (input: FlowInputs['extractTextFromDocument']) => `You are a medical document processing expert. You will extract the text from the provided document. The document is provided as a data URI. Return a JSON object with a single key "extractedText" containing the extracted text. Document: ${input.documentDataUri}`,
   extractClinicalConcepts: (input: FlowInputs['extractClinicalConcepts']) => `You are an AI assistant specialized in extracting clinical concepts from medical texts in Spanish. Given the following medical text, extract the key clinical concepts. Return a JSON object with a key "clinicalConcepts" which is an array of strings. Text: ${input.text}`,
-  suggestDiagnoses: (input: FlowInputs['suggestDiagnoses']) => `You are an expert medical coder in Spanish. Based on the clinical concepts provided, suggest possible diagnoses using the ${input.codingSystem} system. Return a JSON object with a key "diagnoses" which is a single string containing the suggestions. Clinical Concepts: ${input.clinicalConcepts}`,
+  suggestDiagnoses: (input: FlowInputs['suggestDiagnoses']) => `You are an expert medical coder in Spanish. Based on the clinical concepts provided, suggest a list of possible diagnoses using the ${input.codingSystem} system. For each diagnosis, provide the code, a description, and a confidence level ('Alta', 'Media', or 'Baja'). Return a JSON object with a "diagnoses" array. Clinical Concepts: ${input.clinicalConcepts}`,
   summarizeClinicalNotes: (input: FlowInputs['summarizeClinicalNotes']) => `You are an expert medical summarizer. Please summarize the following clinical notes in Spanish, extracting the most important information and details. Return a JSON object with a single key "summary" containing the text. Clinical Notes: ${input.notes}`,
 };
 
@@ -46,7 +46,9 @@ export async function runIAFlow<T extends FlowName>(
 ): Promise<FlowOutputs[T]> {
   if (provider === 'genkit') {
     const flow = genkitFlows[flowName];
-    return await flow(input as any);
+    // This is a type assertion because the generic types are hard to track through the object.
+    // It's safe because we know the flowName corresponds to the correct input/output pair.
+    return await (flow as any)(input);
   } else {
     const OLLAMA_API_URL = 'http://localhost:11434/api/generate';
     const prompt = ollamaPrompts[flowName](input as any);

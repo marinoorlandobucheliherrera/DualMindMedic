@@ -1,5 +1,3 @@
-// A Genkit flow for suggesting possible diagnoses based on clinical concepts.
-
 'use server';
 
 /**
@@ -23,10 +21,16 @@ const SuggestDiagnosesInputSchema = z.object({
 });
 export type SuggestDiagnosesInput = z.infer<typeof SuggestDiagnosesInputSchema>;
 
+const DiagnosisSchema = z.object({
+  code: z.string().describe('The diagnosis code.'),
+  description: z.string().describe('The description of the diagnosis.'),
+  confidence: z.enum(['Alta', 'Media', 'Baja']).describe('The confidence level of the diagnosis.'),
+});
+
 const SuggestDiagnosesOutputSchema = z.object({
   diagnoses: z
-    .string()
-    .describe('The possible diagnoses based on the clinical concepts.'),
+    .array(DiagnosisSchema)
+    .describe('A list of possible diagnoses, each with a code, description, and confidence level.'),
 });
 export type SuggestDiagnosesOutput = z.infer<typeof SuggestDiagnosesOutputSchema>;
 
@@ -38,11 +42,16 @@ const prompt = ai.definePrompt({
   name: 'suggestDiagnosesPrompt',
   input: {schema: SuggestDiagnosesInputSchema},
   output: {schema: SuggestDiagnosesOutputSchema},
-  prompt: `You are an expert medical coder. Based on the clinical concepts provided, suggest possible diagnoses using the {{{codingSystem}}} coding system.
+  prompt: `You are an expert medical coder. Based on the clinical concepts provided, suggest a list of possible diagnoses using the {{{codingSystem}}} coding system.
+
+For each diagnosis, provide:
+1.  The diagnosis code.
+2.  A description of the diagnosis.
+3.  A confidence level for the diagnosis ('Alta', 'Media', or 'Baja').
 
 Clinical Concepts: {{{clinicalConcepts}}}
 
-Possible Diagnoses:`,
+Return the response as a JSON object with a "diagnoses" array.`,
 });
 
 const suggestDiagnosesFlow = ai.defineFlow(
