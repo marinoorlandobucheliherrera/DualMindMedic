@@ -50,7 +50,8 @@ export async function runIAFlow<T extends FlowName>(
     // It's safe because we know the flowName corresponds to the correct input/output pair.
     return await (flow as any)(input);
   } else {
-    const OLLAMA_API_URL = 'http://localhost:11434/api/generate';
+    // Use the proxied API route
+    const OLLAMA_API_URL = '/api/ollama/generate';
     const prompt = ollamaPrompts[flowName](input as any);
     
     const isImageFlow = flowName === 'extractTextFromDocument';
