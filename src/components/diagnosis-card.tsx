@@ -42,10 +42,10 @@ export function DiagnosisCard({ diagnosis }: DiagnosisCardProps) {
     transition,
   };
   
-  const confidenceColor = {
-    'Alta': 'bg-green-500 hover:bg-green-500/90',
-    'Media': 'bg-yellow-500 hover:bg-yellow-500/90',
-    'Baja': 'bg-red-500 hover:bg-red-500/90',
+  const confidenceStyles = {
+    'Alta': { backgroundColor: '#22c55e' }, // green-500
+    'Media': { backgroundColor: '#eab308' }, // yellow-500
+    'Baja': { backgroundColor: '#ef4444' }, // red-500
   };
 
   const handleSave = () => {
@@ -82,7 +82,7 @@ export function DiagnosisCard({ diagnosis }: DiagnosisCardProps) {
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
-        <Badge className={cn("text-white", confidenceColor[diagnosis.confidence])}>
+        <Badge style={confidenceStyles[diagnosis.confidence]} className="text-white">
             {diagnosis.confidence}
         </Badge>
         <Button size="icon" variant="ghost" onClick={handleSave} className="h-8 w-8" aria-label="Guardar en Historial">
