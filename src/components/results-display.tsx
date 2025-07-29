@@ -106,7 +106,18 @@ export function ResultsDisplay({ results, isLoading, onClearDiagnoses, onSave }:
   }
 
   const handleTogglePrimary = (code: string) => {
-      setPrimaryDiagnosis(current => current === code ? null : code);
+    const newPrimaryCode = primaryDiagnosis === code ? null : code;
+    setPrimaryDiagnosis(newPrimaryCode);
+
+    if (newPrimaryCode) {
+      setDiagnoses(currentDiagnoses => {
+        const itemToMove = currentDiagnoses.find(d => d.code === newPrimaryCode);
+        if (!itemToMove) return currentDiagnoses;
+        
+        const otherItems = currentDiagnoses.filter(d => d.code !== newPrimaryCode);
+        return [itemToMove, ...otherItems];
+      });
+    }
   }
 
   const handleToggleSelected = (code: string, isSelected: boolean) => {
