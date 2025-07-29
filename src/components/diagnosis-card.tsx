@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Card, CardFooter } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -56,7 +56,7 @@ export function DiagnosisCard({ diagnosis }: DiagnosisCardProps) {
   }
 
   return (
-    <Card ref={setNodeRef} style={style} className="p-3 flex flex-col gap-2 bg-card/80">
+    <Card ref={setNodeRef} style={style} className="p-3 bg-card/80">
       <div className="flex items-center gap-2">
         <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1">
           <GripVertical className="h-5 w-5 text-muted-foreground" />
@@ -85,13 +85,19 @@ export function DiagnosisCard({ diagnosis }: DiagnosisCardProps) {
         <Badge className={cn("text-white", confidenceColor[diagnosis.confidence])}>
             {diagnosis.confidence}
         </Badge>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button size="icon" variant="ghost" onClick={handleSave} className="h-8 w-8">
+                  <Save className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Guardar en Historial</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
-      <CardFooter className="p-0 justify-end">
-        <Button size="sm" variant="ghost" onClick={handleSave}>
-            <Save className="mr-2 h-4 w-4" />
-            Guardar en Historial
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
