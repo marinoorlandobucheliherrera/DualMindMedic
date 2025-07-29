@@ -23,7 +23,7 @@ export type SuggestDiagnosesInput = z.infer<typeof SuggestDiagnosesInputSchema>;
 
 const DiagnosisSchema = z.object({
   code: z.string().describe('The diagnosis code.'),
-  description: z.string().describe('The description of the diagnosis.'),
+  description: z.string().describe('The description of the diagnosis in Spanish.'),
   confidence: z.enum(['Alta', 'Media', 'Baja']).describe('The confidence level of the diagnosis.'),
 });
 
@@ -42,11 +42,11 @@ const prompt = ai.definePrompt({
   name: 'suggestDiagnosesPrompt',
   input: {schema: SuggestDiagnosesInputSchema},
   output: {schema: SuggestDiagnosesOutputSchema},
-  prompt: `You are an expert medical coder. Based on the clinical concepts provided, suggest a list of possible diagnoses using the {{{codingSystem}}} coding system.
+  prompt: `You are an expert medical coder. Based on the clinical concepts provided, suggest a list of possible diagnoses in Spanish using the {{{codingSystem}}} coding system.
 
 For each diagnosis, provide:
 1.  The diagnosis code.
-2.  A description of the diagnosis.
+2.  A description of the diagnosis in Spanish.
 3.  A confidence level for the diagnosis ('Alta', 'Media', or 'Baja').
 
 Clinical Concepts: {{{clinicalConcepts}}}

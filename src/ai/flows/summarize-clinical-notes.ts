@@ -16,7 +16,7 @@ const SummarizeClinicalNotesInputSchema = z.object({
 export type SummarizeClinicalNotesInput = z.infer<typeof SummarizeClinicalNotesInputSchema>;
 
 const SummarizeClinicalNotesOutputSchema = z.object({
-  summary: z.string().describe('The summary of the clinical notes.'),
+  summary: z.string().describe('The summary of the clinical notes in Spanish.'),
 });
 export type SummarizeClinicalNotesOutput = z.infer<typeof SummarizeClinicalNotesOutputSchema>;
 
@@ -30,7 +30,7 @@ const prompt = ai.definePrompt({
   output: {schema: SummarizeClinicalNotesOutputSchema},
   prompt: `You are an expert medical summarizer.
 
-  Please summarize the following clinical notes, extracting the most important information and details:
+  Please summarize the following clinical notes in Spanish, extracting the most important information and details:
 
   Clinical Notes: {{{notes}}}`,
 });

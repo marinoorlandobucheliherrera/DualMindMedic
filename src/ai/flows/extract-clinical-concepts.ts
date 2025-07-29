@@ -31,7 +31,7 @@ const prompt = ai.definePrompt({
   name: 'extractClinicalConceptsPrompt',
   input: {schema: ExtractClinicalConceptsInputSchema},
   output: {schema: ExtractClinicalConceptsOutputSchema},
-  prompt: `You are an AI assistant specialized in extracting clinical concepts from medical texts.
+  prompt: `You are an AI assistant specialized in extracting clinical concepts from medical texts in Spanish.
 
   Given the following medical text, extract the key clinical concepts. Return a list of clinical concepts.
 
