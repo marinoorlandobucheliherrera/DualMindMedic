@@ -1,7 +1,5 @@
-// src/components/diagnosis-card.tsx
 'use client';
 
-import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card } from '@/components/ui/card';
@@ -9,10 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { GripVertical, Star, Save, Trash2 } from 'lucide-react';
+import { GripVertical, Star, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
-
 
 export type Diagnosis = {
   code: string;
@@ -22,85 +18,72 @@ export type Diagnosis = {
 
 type DiagnosisCardProps = {
   diagnosis: Diagnosis;
-  onDelete: (code: string) => void;
+  isPrimary: boolean;
+  isSelected: boolean;
+  onTogglePrimary: () => void;
+  onToggleSelected: (isSelected: boolean) => void;
+  onDelete: () => void;
 };
 
-export function DiagnosisCard({ diagnosis, onDelete }: DiagnosisCardProps) {
-  const { toast } = useToast();
-  const [isPrimary, setIsPrimary] = useState(false);
-  const [isSelected, setIsSelected] = useState(false);
-
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({id: diagnosis.code});
+export function DiagnosisCard({
+  diagnosis,
+  isPrimary,
+  isSelected,
+  onTogglePrimary,
+  onToggleSelected,
+  onDelete,
+}: DiagnosisCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: diagnosis.code });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
-  
+
   const confidenceStyles = {
-    'Alta': { backgroundColor: '#22c55e' }, // green-500
-    'Media': { backgroundColor: '#eab308' }, // yellow-500
-    'Baja': { backgroundColor: '#ef4444' }, // red-500
+    'Alta': 'bg-green-500 hover:bg-green-600',
+    'Media': 'bg-yellow-500 hover:bg-yellow-600',
+    'Baja': 'bg-red-500 hover:bg-red-600',
   };
 
-  const handleSave = () => {
-    toast({
-      title: 'Guardado (Simulación)',
-      description: `Diagnóstico "${diagnosis.code}" guardado en el historial.`,
-    });
-  }
-  
-  const handleDelete = () => {
-    onDelete(diagnosis.code);
-  }
-
   return (
-    <Card ref={setNodeRef} style={style} className="p-3 bg-card/80">
-      <div className="flex items-center gap-2">
-        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 shrink-0">
-          <GripVertical className="h-5 w-5 text-muted-foreground" />
+    <Card ref={setNodeRef} style={style} className="p-2 bg-card/80 transition-shadow hover:shadow-md">
+      <div className="flex items-center gap-2 w-full">
+        <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-1 shrink-0 text-muted-foreground hover:text-foreground">
+          <GripVertical className="h-5 w-5" />
         </button>
         <div className="shrink-0">
-          <Checkbox 
+          <Checkbox
             checked={isSelected}
-            onCheckedChange={() => setIsSelected(!isSelected)}
-            aria-label="Seleccionar diagnóstico" 
+            onCheckedChange={(checked) => onToggleSelected(Boolean(checked))}
+            aria-label="Seleccionar diagnóstico"
           />
         </div>
-        <button onClick={() => setIsPrimary(!isPrimary)} className="p-1 shrink-0">
-          <Star className={cn('h-5 w-5', isPrimary ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground')} />
+        <button onClick={onTogglePrimary} className="p-1 shrink-0">
+          <Star className={cn('h-5 w-5 transition-colors', isPrimary ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground hover:text-yellow-300')} />
         </button>
-        <code className="font-semibold text-sm shrink-0">{diagnosis.code}</code>
+        <code className="font-semibold text-sm shrink-0 w-24 truncate">{diagnosis.code}</code>
         <div className="flex-1 min-w-0">
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <p className="text-sm text-muted-foreground truncate cursor-default">
-                          {diagnosis.description}
-                        </p>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>{diagnosis.description}</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="text-sm text-muted-foreground truncate cursor-default">
+                  {diagnosis.description}
+                </p>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">{diagnosis.description}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         <div className="shrink-0">
-            <Badge style={confidenceStyles[diagnosis.confidence]} className="text-white">
-                {diagnosis.confidence}
-            </Badge>
+          <Badge className={cn("text-white", confidenceStyles[diagnosis.confidence])}>
+            {diagnosis.confidence}
+          </Badge>
         </div>
-        <Button size="icon" variant="ghost" onClick={handleSave} className="h-8 w-8 shrink-0" aria-label="Guardar en Historial">
-            <Save className="h-4 w-4" />
-        </Button>
-        <Button size="icon" variant="ghost" onClick={handleDelete} className="h-8 w-8 shrink-0 text-destructive hover:text-destructive" aria-label="Eliminar diagnóstico">
-            <Trash2 className="h-4 w-4" />
+        <Button size="icon" variant="ghost" onClick={onDelete} className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive" aria-label="Eliminar diagnóstico">
+          <Trash2 className="h-4 w-4" />
         </Button>
       </div>
     </Card>

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { ClipboardList, Sparkles, Stethoscope, Copy, X } from 'lucide-react';
+import { ClipboardList, Sparkles, Stethoscope, Copy, X, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Diagnosis, DiagnosisCard } from './diagnosis-card';
@@ -35,16 +35,24 @@ type ResultsDisplayProps = {
   results: Results;
   isLoading: boolean;
   onClearDiagnoses: () => void;
+  onSave: (data: { primaryDiagnosis?: string, selectedDiagnoses?: string[] }) => void;
 };
 
-export function ResultsDisplay({ results, isLoading, onClearDiagnoses }: ResultsDisplayProps) {
+export function ResultsDisplay({ results, isLoading, onClearDiagnoses, onSave }: ResultsDisplayProps) {
   const { summary, concepts } = results;
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
   const [showConcepts, setShowConcepts] = useState(false);
+  
+  // State for cards
+  const [primaryDiagnosis, setPrimaryDiagnosis] = useState<string | null>(null);
+  const [selectedDiagnoses, setSelectedDiagnoses] = useState<Set<string>>(new Set());
+  
   const { toast } = useToast();
 
   useEffect(() => {
     setDiagnoses(results.diagnoses || []);
+    setPrimaryDiagnosis(null);
+    setSelectedDiagnoses(new Set());
   }, [results.diagnoses]);
   
   useEffect(() => {
@@ -56,7 +64,11 @@ export function ResultsDisplay({ results, isLoading, onClearDiagnoses }: Results
   const hasResults = summary || (concepts && concepts.length > 0) || (diagnoses && diagnoses.length > 0);
   
   const sensors = useSensors(
-    useSensor(PointerSensor)
+    useSensor(PointerSensor, {
+        activationConstraint: {
+          distance: 8,
+        },
+    })
   );
   
   function handleDragEnd(event: DragEndEvent) {
@@ -86,12 +98,48 @@ export function ResultsDisplay({ results, isLoading, onClearDiagnoses }: Results
   
   const handleDeleteDiagnosis = (code: string) => {
       setDiagnoses(currentDiagnoses => currentDiagnoses.filter(d => d.code !== code));
+      // also remove from selected/primary
+      if (primaryDiagnosis === code) setPrimaryDiagnosis(null);
+      const newSelected = new Set(selectedDiagnoses);
+      newSelected.delete(code);
+      setSelectedDiagnoses(newSelected);
   }
+
+  const handleTogglePrimary = (code: string) => {
+      setPrimaryDiagnosis(current => current === code ? null : code);
+  }
+
+  const handleToggleSelected = (code: string, isSelected: boolean) => {
+      setSelectedDiagnoses(current => {
+          const newSet = new Set(current);
+          if (isSelected) {
+              newSet.add(code);
+          } else {
+              newSet.delete(code);
+          }
+          return newSet;
+      });
+  }
+  
+  const handleSave = () => {
+    onSave({ 
+      primaryDiagnosis: primaryDiagnosis || undefined, 
+      selectedDiagnoses: Array.from(selectedDiagnoses) 
+    });
+  };
 
   return (
     <Card className="h-full flex flex-col shadow-lg">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">Resultados del Análisis</CardTitle>
+        <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">Resultados del Análisis</CardTitle>
+            {hasResults && !isLoading && (
+              <Button onClick={handleSave} size="sm">
+                <Save className="mr-2 h-4 w-4" />
+                Guardar en Historial
+              </Button>
+            )}
+        </div>
         <CardDescription>Aquí se mostrarán los resultados generados por la IA.</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col">
@@ -190,7 +238,15 @@ export function ResultsDisplay({ results, isLoading, onClearDiagnoses }: Results
                     >
                       <div className="space-y-2 py-2">
                       {diagnoses.map(diag => (
-                        <DiagnosisCard key={diag.code} diagnosis={diag} onDelete={handleDeleteDiagnosis} />
+                        <DiagnosisCard 
+                          key={diag.code} 
+                          diagnosis={diag}
+                          isPrimary={primaryDiagnosis === diag.code}
+                          isSelected={selectedDiagnoses.has(diag.code)}
+                          onTogglePrimary={() => handleTogglePrimary(diag.code)}
+                          onToggleSelected={(isSelected) => handleToggleSelected(diag.code, isSelected)}
+                          onDelete={() => handleDeleteDiagnosis(diag.code)} 
+                        />
                       ))}
                       </div>
                     </SortableContext>

@@ -7,19 +7,41 @@ import { DocumentProcessor } from '@/components/document-processor';
 import { ResultsDisplay } from '@/components/results-display';
 import { CodingSystemSelector, CodingSystem } from '@/components/coding-system-selector';
 import type { Diagnosis } from '@/components/diagnosis-card';
+import { HistoryPanel } from '@/components/history-panel';
+import { useToast } from '@/hooks/use-toast';
+import useLocalStorage from '@/hooks/use-local-storage';
+import { Separator } from '@/components/ui/separator';
 
-type ResultsState = {
+export type ResultsState = {
   extractedText?: string;
   summary?: string;
   concepts?: string[];
   diagnoses?: Diagnosis[];
+  fileName?: string;
 };
+
+export type HistoryEntry = {
+  id: string;
+  timestamp: number;
+  fileName: string;
+  codingSystem: CodingSystem;
+  isReviewed: boolean;
+  extractedText: string;
+  summary?: string;
+  concepts?: string[];
+  diagnoses?: Diagnosis[];
+  primaryDiagnosis?: string;
+  selectedDiagnoses?: string[];
+};
+
 
 function HomePageContent() {
   const [results, setResults] = useState<ResultsState>({});
   const [isBusy, setIsBusy] = useState(false);
   const [codingSystem, setCodingSystem] = useState<CodingSystem>('CIE-10');
-  
+  const [history, setHistory] = useLocalStorage<HistoryEntry[]>('analysisHistory', []);
+  const { toast } = useToast();
+
   const updateResults = (newValues: Partial<ResultsState>) => {
       setResults(prev => ({...prev, ...newValues}));
   };
@@ -31,6 +53,49 @@ function HomePageContent() {
   const clearDiagnoses = () => {
     setResults(prev => ({...prev, diagnoses: []}));
   }
+  
+  const handleSaveToHistory = (entryData: {primaryDiagnosis?: string; selectedDiagnoses?: string[]}) => {
+    if (!results.extractedText && !results.summary) {
+      toast({
+        variant: 'destructive',
+        title: 'Nada que guardar',
+        description: 'No hay resultados de análisis para guardar en el historial.',
+      });
+      return;
+    }
+    
+    const newEntry: HistoryEntry = {
+      id: `hist_${new Date().getTime()}`,
+      timestamp: Date.now(),
+      fileName: results.fileName || 'Entrada Manual',
+      codingSystem: codingSystem,
+      isReviewed: false,
+      extractedText: results.extractedText || '',
+      summary: results.summary,
+      concepts: results.concepts,
+      diagnoses: results.diagnoses,
+      ...entryData,
+    };
+
+    setHistory([newEntry, ...history]);
+    toast({
+      title: 'Guardado en el historial',
+      description: `La entrada "${newEntry.fileName}" ha sido guardada.`,
+    });
+  };
+  
+  const handleLoadFromHistory = (entry: HistoryEntry) => {
+    setCodingSystem(entry.codingSystem);
+    setResults({
+      fileName: entry.fileName,
+      extractedText: entry.extractedText,
+      summary: entry.summary,
+      concepts: entry.concepts,
+      diagnoses: entry.diagnoses,
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast({ title: 'Entrada Cargada', description: `Se cargaron los datos de "${entry.fileName}".`});
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -52,8 +117,21 @@ function HomePageContent() {
               onBusyChange={setIsBusy}
               codingSystem={codingSystem}
           />
-          <ResultsDisplay results={results} isLoading={isBusy} onClearDiagnoses={clearDiagnoses} />
+          <ResultsDisplay 
+            results={results} 
+            isLoading={isBusy} 
+            onClearDiagnoses={clearDiagnoses}
+            onSave={handleSaveToHistory} 
+          />
         </div>
+        
+        <Separator className="my-12" />
+        
+        <HistoryPanel 
+          history={history} 
+          setHistory={setHistory} 
+          onLoad={handleLoadFromHistory}
+        />
       </main>
     </div>
   );

@@ -16,6 +16,7 @@ type ResultsState = {
   summary?: string;
   concepts?: string[];
   diagnoses?: Diagnosis[];
+  fileName?: string;
 };
 
 type DocumentProcessorProps = {
@@ -32,6 +33,7 @@ export function DocumentProcessor({ onUpdateResults, onClearResults, onBusyChang
   const [isExtracting, setIsExtracting] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isProcessingConcepts, setIsProcessingConcepts] = useState(false);
+  const [fileName, setFileName] = useState<string | undefined>(undefined);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -41,6 +43,7 @@ export function DocumentProcessor({ onUpdateResults, onClearResults, onBusyChang
     setText('');
     setIsExtracting(true);
     onBusyChange(true);
+    setFileName(file.name);
 
     try {
       const reader = new FileReader();
@@ -51,7 +54,7 @@ export function DocumentProcessor({ onUpdateResults, onClearResults, onBusyChang
           const result = await runIAFlow('extractTextFromDocument', { documentDataUri: dataUri }, iaProvider);
           const extracted = result.extractedText;
           setText(extracted);
-          onUpdateResults({ extractedText: extracted });
+          onUpdateResults({ extractedText: extracted, fileName: file.name });
           toast({ title: 'Texto extraído', description: `Se extrajo el texto de ${file.name}.` });
         } catch (err) {
             console.error(err);
@@ -77,7 +80,9 @@ export function DocumentProcessor({ onUpdateResults, onClearResults, onBusyChang
   
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       setText(event.target.value);
+      setFileName('Entrada Manual');
       onClearResults();
+      onUpdateResults({ extractedText: event.target.value, fileName: 'Entrada Manual' });
   };
 
   const handleSummarize = async () => {
