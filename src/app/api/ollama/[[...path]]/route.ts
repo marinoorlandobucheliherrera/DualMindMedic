@@ -1,7 +1,8 @@
 // src/app/api/ollama/[[...path]]/route.ts
 import {NextRequest, NextResponse} from 'next/server';
 
-const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
+// Use the explicit IP address for localhost to prevent resolution issues.
+const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://127.0.0.1:11434';
 
 async function handler(req: NextRequest) {
   const path = req.nextUrl.pathname.replace('/api/ollama', '');
@@ -28,6 +29,7 @@ async function handler(req: NextRequest) {
     });
   } catch (e: any) {
     console.error(`Error proxying to Ollama: ${e.message}`);
+    // Return the underlying error for better debugging
     return new NextResponse(JSON.stringify({error: e.message}), {
       status: 500,
       statusText: 'Internal Server Error',
