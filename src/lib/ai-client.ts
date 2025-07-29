@@ -60,7 +60,7 @@ export async function runIAFlow<T extends FlowName>(
     }
 
     const body = {
-      model: isImageFlow ? "llava:latest" : "llama3:latest",
+      model: isImageFlow ? "llava:latest" : "llama3",
       prompt,
       stream: false,
       format: "json",
