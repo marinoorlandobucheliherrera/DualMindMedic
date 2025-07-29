@@ -1,6 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 import type { HistoryEntry } from '@/app/page';
+import { db } from '@/lib/db';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,19 +24,18 @@ import {
 
 type HistoryPanelProps = {
   history: HistoryEntry[];
-  setHistory: (history: HistoryEntry[]) => void;
   onLoad: (entry: HistoryEntry) => void;
 };
 
 type FilterStatus = 'all' | 'reviewed' | 'pending';
 
-export function HistoryPanel({ history, setHistory, onLoad }: HistoryPanelProps) {
+export function HistoryPanel({ history, onLoad }: HistoryPanelProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const { toast } = useToast();
 
   const filteredHistory = useMemo(() => {
-    return history
+    return (history || [])
       .filter(entry => {
         if (filterStatus === 'all') return true;
         return filterStatus === 'reviewed' ? entry.isReviewed : !entry.isReviewed;
@@ -55,18 +55,33 @@ export function HistoryPanel({ history, setHistory, onLoad }: HistoryPanelProps)
       });
   }, [history, searchTerm, filterStatus]);
 
-  const handleToggleReviewed = (id: string, isReviewed: boolean) => {
-    setHistory(history.map(entry => (entry.id === id ? { ...entry, isReviewed } : entry)));
+  const handleToggleReviewed = async (id: number, isReviewed: boolean) => {
+    try {
+      await db.history.update(id, { isReviewed });
+    } catch (error) {
+      console.error("Failed to toggle reviewed status:", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo actualizar el estado de revisión.' });
+    }
   };
 
-  const handleDeleteEntry = (id: string) => {
-    setHistory(history.filter(entry => entry.id !== id));
-    toast({ title: 'Entrada eliminada', description: 'La entrada ha sido eliminada del historial.' });
+  const handleDeleteEntry = async (id: number) => {
+    try {
+      await db.history.delete(id);
+      toast({ title: 'Entrada eliminada', description: 'La entrada ha sido eliminada del historial.' });
+    } catch (error) {
+      console.error("Failed to delete entry:", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo eliminar la entrada.' });
+    }
   };
 
-  const handleClearHistory = () => {
-    setHistory([]);
-    toast({ title: 'Historial borrado', description: 'Todas las entradas han sido eliminadas.' });
+  const handleClearHistory = async () => {
+    try {
+      await db.history.clear();
+      toast({ title: 'Historial borrado', description: 'Todas las entradas han sido eliminadas.' });
+    } catch (error) {
+      console.error("Failed to clear history:", error);
+      toast({ variant: 'destructive', title: 'Error', description: 'No se pudo borrar el historial.' });
+    }
   };
   
   const exportToJson = () => {
@@ -84,14 +99,17 @@ export function HistoryPanel({ history, setHistory, onLoad }: HistoryPanelProps)
     const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const text = e.target?.result;
-        if (typeof text !== 'string') throw new Error("File is not a text file.");
-        const importedHistory = JSON.parse(text);
-        // Basic validation
-        if (Array.isArray(importedHistory) && importedHistory.every(item => 'id' in item && 'timestamp' in item)) {
-          setHistory(importedHistory);
+        if (typeof text !== 'string') throw new Error("El archivo no es de texto.");
+        const importedHistory: HistoryEntry[] = JSON.parse(text);
+
+        if (Array.isArray(importedHistory) && importedHistory.every(item => 'timestamp' in item && 'fileName' in item)) {
+          await db.transaction('rw', db.history, async () => {
+            await db.history.clear();
+            await db.history.bulkAdd(importedHistory);
+          });
           toast({ title: 'Historial importado', description: 'El historial ha sido cargado desde el archivo JSON.' });
         } else {
           throw new Error('El archivo JSON no tiene el formato correcto.');
@@ -108,7 +126,7 @@ export function HistoryPanel({ history, setHistory, onLoad }: HistoryPanelProps)
      let csvContent = "data:text/csv;charset=utf-8," 
         + "ID,Timestamp,File Name,Reviewed,Coding System,Primary Diagnosis,Selected Diagnoses,Extracted Text,Summary,Concepts,Diagnoses\n";
 
-    history.forEach(entry => {
+    (history || []).forEach(entry => {
         const row = [
             `"${entry.id}"`,
             `"${new Date(entry.timestamp).toISOString()}"`,
@@ -142,7 +160,7 @@ export function HistoryPanel({ history, setHistory, onLoad }: HistoryPanelProps)
             <div>
                 <CardTitle>Historial de Análisis</CardTitle>
                 <CardDescription>
-                  {filteredHistory.length} de {history.length} entradas mostradas.
+                  {filteredHistory.length} de {(history || []).length} entradas mostradas.
                 </CardDescription>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -150,15 +168,15 @@ export function HistoryPanel({ history, setHistory, onLoad }: HistoryPanelProps)
                     <Import className="mr-2 h-4 w-4" /> Importar JSON
                 </Button>
                 <input type="file" id="import-json-input" className="hidden" accept=".json" onChange={importFromJson}/>
-                <Button variant="outline" size="sm" onClick={exportToJson}>
+                <Button variant="outline" size="sm" onClick={exportToJson} disabled={!history || history.length === 0}>
                     <FileDown className="mr-2 h-4 w-4" /> Exportar JSON
                 </Button>
-                <Button variant="outline" size="sm" onClick={exportToCsv}>
+                <Button variant="outline" size="sm" onClick={exportToCsv} disabled={!history || history.length === 0}>
                     <FileDown className="mr-2 h-4 w-4" /> Exportar CSV
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
+                    <Button variant="destructive" size="sm" disabled={!history || history.length === 0}>
                         <Trash2 className="mr-2 h-4 w-4" /> Borrar Todo
                     </Button>
                   </AlertDialogTrigger>
@@ -208,8 +226,8 @@ export function HistoryPanel({ history, setHistory, onLoad }: HistoryPanelProps)
                   key={entry.id}
                   entry={entry}
                   onLoad={() => onLoad(entry)}
-                  onToggleReviewed={handleToggleReviewed}
-                  onDelete={() => handleDeleteEntry(entry.id)}
+                  onToggleReviewed={(isReviewed) => handleToggleReviewed(entry.id!, isReviewed)}
+                  onDelete={() => handleDeleteEntry(entry.id!)}
                 />
               ))}
             </div>

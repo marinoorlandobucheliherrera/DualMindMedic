@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/lib/db';
 import { IAProviderWrapper } from '@/contexts/ia-provider-context';
 import { IAProviderSelector } from '@/components/ia-provider-selector';
 import { DocumentProcessor } from '@/components/document-processor';
@@ -9,7 +11,6 @@ import { CodingSystemSelector, CodingSystem } from '@/components/coding-system-s
 import type { Diagnosis } from '@/components/diagnosis-card';
 import { HistoryPanel } from '@/components/history-panel';
 import { useToast } from '@/hooks/use-toast';
-import useLocalStorage from '@/hooks/use-local-storage';
 import { Separator } from '@/components/ui/separator';
 
 export type ResultsState = {
@@ -20,8 +21,8 @@ export type ResultsState = {
   fileName?: string;
 };
 
-export type HistoryEntry = {
-  id: string;
+export interface HistoryEntry {
+  id?: number; // Optional because it's auto-incremented
   timestamp: number;
   fileName: string;
   codingSystem: CodingSystem;
@@ -39,8 +40,9 @@ function HomePageContent() {
   const [results, setResults] = useState<ResultsState>({});
   const [isBusy, setIsBusy] = useState(false);
   const [codingSystem, setCodingSystem] = useState<CodingSystem>('CIE-10');
-  const [history, setHistory] = useLocalStorage<HistoryEntry[]>('analysisHistory', []);
   const { toast } = useToast();
+
+  const history = useLiveQuery(() => db.history.orderBy('timestamp').reverse().toArray(), []);
 
   const updateResults = (newValues: Partial<ResultsState>) => {
       setResults(prev => ({...prev, ...newValues}));
@@ -54,7 +56,7 @@ function HomePageContent() {
     setResults(prev => ({...prev, diagnoses: []}));
   }
   
-  const handleSaveToHistory = (entryData: {primaryDiagnosis?: string; selectedDiagnoses?: string[]}) => {
+  const handleSaveToHistory = async (entryData: {primaryDiagnosis?: string; selectedDiagnoses?: string[]}) => {
     if (!results.extractedText && !results.summary) {
       toast({
         variant: 'destructive',
@@ -65,7 +67,6 @@ function HomePageContent() {
     }
     
     const newEntry: HistoryEntry = {
-      id: `hist_${new Date().getTime()}`,
       timestamp: Date.now(),
       fileName: results.fileName || 'Entrada Manual',
       codingSystem: codingSystem,
@@ -77,11 +78,20 @@ function HomePageContent() {
       ...entryData,
     };
 
-    setHistory([newEntry, ...history]);
-    toast({
-      title: 'Guardado en el historial',
-      description: `La entrada "${newEntry.fileName}" ha sido guardada.`,
-    });
+    try {
+      await db.history.add(newEntry);
+      toast({
+        title: 'Guardado en el historial',
+        description: `La entrada "${newEntry.fileName}" ha sido guardada.`,
+      });
+    } catch (error) {
+      console.error("Failed to save to history:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error al guardar',
+        description: 'No se pudo guardar la entrada en el historial.',
+      });
+    }
   };
   
   const handleLoadFromHistory = (entry: HistoryEntry) => {
@@ -128,8 +138,7 @@ function HomePageContent() {
         <Separator className="my-12" />
         
         <HistoryPanel 
-          history={history} 
-          setHistory={setHistory} 
+          history={history || []}
           onLoad={handleLoadFromHistory}
         />
       </main>

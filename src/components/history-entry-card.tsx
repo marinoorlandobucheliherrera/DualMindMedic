@@ -24,7 +24,7 @@ import {
 type HistoryEntryCardProps = {
   entry: HistoryEntry;
   onLoad: () => void;
-  onToggleReviewed: (id: string, isReviewed: boolean) => void;
+  onToggleReviewed: (isReviewed: boolean) => void;
   onDelete: () => void;
 };
 
@@ -68,7 +68,7 @@ export function HistoryEntryCard({ entry, onLoad, onToggleReviewed, onDelete }: 
             <Switch
                 id={`reviewed-switch-${entry.id}`}
                 checked={entry.isReviewed}
-                onCheckedChange={(checked) => onToggleReviewed(entry.id, checked)}
+                onCheckedChange={(checked) => onToggleReviewed(checked)}
             />
             <Label htmlFor={`reviewed-switch-${entry.id}`} className="text-sm cursor-pointer">Marcar como revisado</Label>
         </div>
