@@ -22,6 +22,8 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 type Results = {
   summary?: string;
@@ -38,11 +40,18 @@ type ResultsDisplayProps = {
 export function ResultsDisplay({ results, isLoading, onClearDiagnoses }: ResultsDisplayProps) {
   const { summary, concepts } = results;
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
+  const [showConcepts, setShowConcepts] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     setDiagnoses(results.diagnoses || []);
   }, [results.diagnoses]);
+  
+  useEffect(() => {
+    if (!results.concepts || results.concepts.length === 0) {
+      setShowConcepts(false);
+    }
+  }, [results.concepts]);
 
   const hasResults = summary || (concepts && concepts.length > 0) || (diagnoses && diagnoses.length > 0);
   
@@ -77,8 +86,6 @@ export function ResultsDisplay({ results, isLoading, onClearDiagnoses }: Results
   
   const handleDeleteDiagnosis = (code: string) => {
       setDiagnoses(currentDiagnoses => currentDiagnoses.filter(d => d.code !== code));
-      // Note: This only removes it from the view. The parent `results` state is not updated.
-      // If you need to persist this change, `onDeleteDiagnosis` prop would be needed.
   }
 
   return (
@@ -123,23 +130,35 @@ export function ResultsDisplay({ results, isLoading, onClearDiagnoses }: Results
               </div>
             )}
             
-            {summary && (concepts || diagnoses) && <Separator />}
+            {summary && (concepts && concepts.length > 0 || diagnoses.length > 0) && <Separator />}
 
             {concepts && concepts.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  Conceptos Clínicos
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {concepts.map((concept, i) => (
-                    <Badge key={i} variant="secondary" className="text-base font-normal">{concept}</Badge>
-                  ))}
+                 <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-primary" />
+                        Conceptos Clínicos
+                    </h3>
+                    <div className="flex items-center space-x-2">
+                        <Switch
+                            id="concepts-toggle"
+                            checked={showConcepts}
+                            onCheckedChange={setShowConcepts}
+                        />
+                        <Label htmlFor="concepts-toggle" className="cursor-pointer">Mostrar</Label>
+                    </div>
                 </div>
+                {showConcepts && (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                    {concepts.map((concept, i) => (
+                        <Badge key={i} variant="secondary" className="text-base font-normal">{concept}</Badge>
+                    ))}
+                    </div>
+                )}
               </div>
             )}
 
-            {(concepts && diagnoses.length > 0) && <Separator />}
+            {(concepts && concepts.length > 0 && diagnoses.length > 0) && <Separator />}
 
             {diagnoses.length > 0 && (
               <div className="space-y-2 flex-grow flex flex-col min-h-0">
