@@ -2,46 +2,31 @@
 import { useState, useEffect, useCallback } from 'react';
 
 function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val: T) => T)) => void] {
+  const [storedValue, setStoredValue] = useState<T>(initialValue);
 
-  const readValue = useCallback((): T => {
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
+  useEffect(() => {
+    // This effect runs only on the client, after hydration
     try {
       const item = window.localStorage.getItem(key);
-      return item ? (JSON.parse(item) as T) : initialValue;
+      if (item) {
+        setStoredValue(JSON.parse(item));
+      }
     } catch (error) {
       console.warn(`Error reading localStorage key “${key}”:`, error);
-      return initialValue;
-    }
-  }, [initialValue, key]);
-
-  const [storedValue, setStoredValue] = useState<T>(readValue);
-
-  const setValue = useCallback((value: T | ((val: T) => T)) => {
-    if (typeof window == 'undefined') {
-      console.warn(
-        `Tried setting localStorage key “${key}” even though environment is not a client`
-      );
-      return;
-    }
-
-    try {
-      // Use the functional form of setState to avoid depending on storedValue
-      setStoredValue((prev) => {
-          const valueToStore = value instanceof Function ? value(prev) : value;
-          window.localStorage.setItem(key, JSON.stringify(valueToStore));
-          return valueToStore;
-      });
-    } catch (error) {
-      console.error(`Error setting localStorage key “${key}”:`, error);
     }
   }, [key]);
 
-  useEffect(() => {
-    setStoredValue(readValue());
-     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const setValue = useCallback((value: T | ((val: T) => T)) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      }
+    } catch (error) {
+      console.error(`Error setting localStorage key “${key}”:`, error);
+    }
+  }, [key, storedValue]);
 
   return [storedValue, setValue];
 }
