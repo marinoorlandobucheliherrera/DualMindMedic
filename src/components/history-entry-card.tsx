@@ -1,3 +1,4 @@
+
 'use client';
 import type { HistoryEntry } from '@/app/page';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle2, FileText, Trash, Upload, Eye } from 'lucide-react';
+import { AlertCircle, CheckCircle2, FileText, Trash, Upload, Eye, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -62,6 +63,25 @@ export function HistoryEntryCard({ entry, onLoad, onToggleReviewed, onDelete }: 
             <span>{entry.concepts?.length || 0} Conceptos</span>
             <span>{entry.diagnoses?.length || 0} Diagnósticos</span>
         </div>
+        
+        {entry.diagnoses && entry.diagnoses.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-border/50">
+            <h4 className="text-sm font-semibold mb-2">Diagnósticos Guardados:</h4>
+            <ul className="space-y-1 text-xs text-muted-foreground">
+              {entry.diagnoses.map((diag) => (
+                <li key={diag.code} className="flex items-center gap-2">
+                  {entry.primaryDiagnosis === diag.code && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 shrink-0" />}
+                  <code className="font-mono text-xs shrink-0">{diag.code}</code>
+                  <span className="truncate">{diag.description}</span>
+                  {(entry.selectedDiagnoses || []).includes(diag.code) && !entry.primaryDiagnosis && (
+                     <Badge variant="outline" className="text-xs">Seleccionado</Badge>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
       </CardContent>
       <CardFooter className="flex justify-between items-center bg-muted/50 p-3">
         <div className="flex items-center space-x-2">
