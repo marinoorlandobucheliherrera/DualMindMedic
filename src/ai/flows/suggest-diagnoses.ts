@@ -17,6 +17,9 @@ const SuggestDiagnosesInputSchema = z.object({
   clinicalConcepts: z
     .string()
     .describe('The clinical concepts extracted from the medical text.'),
+  codingSystem: z
+    .enum(['CIE-10', 'CIE-11', 'CIE-O'])
+    .describe('The diagnostic coding system to use.'),
 });
 export type SuggestDiagnosesInput = z.infer<typeof SuggestDiagnosesInputSchema>;
 
@@ -35,7 +38,7 @@ const prompt = ai.definePrompt({
   name: 'suggestDiagnosesPrompt',
   input: {schema: SuggestDiagnosesInputSchema},
   output: {schema: SuggestDiagnosesOutputSchema},
-  prompt: `You are an expert medical coder. Based on the clinical concepts provided, suggest possible diagnoses.
+  prompt: `You are an expert medical coder. Based on the clinical concepts provided, suggest possible diagnoses using the {{{codingSystem}}} coding system.
 
 Clinical Concepts: {{{clinicalConcepts}}}
 

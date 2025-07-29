@@ -8,6 +8,7 @@ import { FileText, Loader2, ClipboardList, Stethoscope } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { runIAFlow } from '@/lib/ai-client';
 import { useIAProvider } from '@/contexts/ia-provider-context';
+import type { CodingSystem } from './coding-system-selector';
 
 type ResultsState = {
   extractedText?: string;
@@ -20,9 +21,10 @@ type DocumentProcessorProps = {
   onUpdateResults: (results: Partial<ResultsState>) => void;
   onClearResults: () => void;
   onBusyChange: (isBusy: boolean) => void;
+  codingSystem: CodingSystem;
 };
 
-export function DocumentProcessor({ onUpdateResults, onClearResults, onBusyChange }: DocumentProcessorProps) {
+export function DocumentProcessor({ onUpdateResults, onClearResults, onBusyChange, codingSystem }: DocumentProcessorProps) {
   const { toast } = useToast();
   const { iaProvider } = useIAProvider();
   const [text, setText] = useState('');
@@ -109,7 +111,7 @@ export function DocumentProcessor({ onUpdateResults, onClearResults, onBusyChang
         const concepts = conceptsResult.clinicalConcepts;
         toast({ title: 'Conceptos extraídos' });
 
-        const diagnosesResult = await runIAFlow('suggestDiagnoses', { clinicalConcepts: concepts.join(', ') }, iaProvider);
+        const diagnosesResult = await runIAFlow('suggestDiagnoses', { clinicalConcepts: concepts.join(', '), codingSystem: codingSystem }, iaProvider);
         onUpdateResults({ concepts: concepts, diagnoses: diagnosesResult.diagnoses });
         toast({ title: 'Diagnósticos sugeridos' });
     } catch (err) {
