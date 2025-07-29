@@ -85,18 +85,9 @@ export function DiagnosisCard({ diagnosis }: DiagnosisCardProps) {
         <Badge className={cn("text-white", confidenceColor[diagnosis.confidence])}>
             {diagnosis.confidence}
         </Badge>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button size="icon" variant="ghost" onClick={handleSave} className="h-8 w-8">
-                  <Save className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Guardar en Historial</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button size="icon" variant="ghost" onClick={handleSave} className="h-8 w-8" aria-label="Guardar en Historial">
+            <Save className="h-4 w-4" />
+        </Button>
       </div>
     </Card>
   );
