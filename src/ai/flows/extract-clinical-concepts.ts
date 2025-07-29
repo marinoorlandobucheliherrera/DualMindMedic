@@ -43,6 +43,7 @@ const extractClinicalConceptsFlow = ai.defineFlow(
     name: 'extractClinicalConceptsFlow',
     inputSchema: ExtractClinicalConceptsInputSchema,
     outputSchema: ExtractClinicalConceptsOutputSchema,
+    retries: 3,
   },
   async input => {
     const {output} = await prompt(input);

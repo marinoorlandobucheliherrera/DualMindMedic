@@ -40,6 +40,7 @@ const summarizeClinicalNotesFlow = ai.defineFlow(
     name: 'summarizeClinicalNotesFlow',
     inputSchema: SummarizeClinicalNotesInputSchema,
     outputSchema: SummarizeClinicalNotesOutputSchema,
+    retries: 3,
   },
   async input => {
     const {output} = await prompt(input);

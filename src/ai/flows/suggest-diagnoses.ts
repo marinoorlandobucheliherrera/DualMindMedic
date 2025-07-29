@@ -47,6 +47,7 @@ const suggestDiagnosesFlow = ai.defineFlow(
     name: 'suggestDiagnosesFlow',
     inputSchema: SuggestDiagnosesInputSchema,
     outputSchema: SuggestDiagnosesOutputSchema,
+    retries: 3,
   },
   async input => {
     const {output} = await prompt(input);
